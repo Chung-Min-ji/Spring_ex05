@@ -2,17 +2,20 @@ package org.zerock.controller;
 
 import lombok.extern.log4j.Log4j2;
 import net.coobird.thumbnailator.Thumbnailator;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.zerock.domain.AttachFileDTO;
 
+import javax.xml.ws.Response;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -125,6 +128,8 @@ public class UploadController {
 
             log.info("only filename : " + uploadFileName);
 
+            attachDTO.setFileName(uploadFileName);
+
             // 파일명 중복방지 위한 UUID 생성
             UUID uuid = UUID.randomUUID();
 
@@ -139,14 +144,21 @@ public class UploadController {
 
                 // check image type file
                 if(checkImageType(saveFile)){
+
+                    attachDTO.setImage(true);
+
                     FileOutputStream thumbnail = new FileOutputStream(
-                            // 원본 파일은 그대로 저장되고,
-                            // 파일 이름이 's_'로 시작하는 섬네일 파일이 함께 생성됨.
-                            new File(uploadPath, "s_" + uploadFileName));
+                                                            // 원본 파일은 그대로 저장되고,
+                                                            // 파일 이름이 's_'로 시작하는 섬네일 파일이 함께 생성됨.
+                                                            new File(uploadPath, "s_" + uploadFileName));
+
                     Thumbnailator.createThumbnail(multipartFile.getInputStream(), thumbnail,100, 100);
 
                     thumbnail.close();
                 } //if
+
+                // add to List
+                list.add(attachDTO);
 
             } catch(Exception e){
                 log.error(e.getMessage());
@@ -158,5 +170,28 @@ public class UploadController {
     } //uploadAjaxPost
 
 
+    @GetMapping("/display")
+    @ResponseBody
+    public ResponseEntity<byte[]> getFile(String fileName){
+        log.debug("getFile({}) invoked.", fileName);
+
+        File file = new File("/Users/jeongminji/Etc/upload/" + fileName);
+
+        log.info("file : " + file);
+
+        ResponseEntity<byte[]> result = null;
+
+        try{
+            HttpHeaders header = new HttpHeaders();
+
+            header.add("Content-Type", Files.probeContentType(file.toPath()));
+            result = new ResponseEntity<>(FileCopyUtils.copyToByteArray(file),
+                    header, HttpStatus.OK);
+        } catch (IOException e){
+            e.printStackTrace();
+        } //try-catch
+
+        return result;
+    } //getFile
 
 } //end class

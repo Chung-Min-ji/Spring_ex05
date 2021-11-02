@@ -18,12 +18,43 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+
+    <style>
+
+        .uploadResult{
+            width: 100%;
+            background-color: gray;
+        }
+
+        .uploadResult ul{
+            display: flex;
+            flex-flow: row;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .uploadResult ul li{
+            list-style: none;
+            padding: 10px;
+        }
+
+        .uploadResult ul li img{
+            width: 20px;
+        }
+    </style>
+
 </head>
 <body>
 <h1>Upload With Ajax</h1>
 
 <div class="uploadDiv">
     <input type="file" name="uploadFile" multiple>
+</div>
+
+<div class="uploadResult">
+    <ul>
+
+    </ul>
 </div>
 
 <button id="uploadBtn">Upload</button>
@@ -39,6 +70,13 @@
 
         // 파일 최대 사이즈
         var maxSize = 5242880; //5MB
+
+        // 업로드 부분 초기화에 사용하기 위해,
+        // 아무 내용이 없는 <input type='file'> 을 clone.
+        var cloneObj = $(".uploadDiv").clone();
+
+        // 첨부파일 목록 div
+        var uploadResult = $(".uploadResult");
 
 
         //-------- 파일 확장자와 크기 검사
@@ -56,6 +94,31 @@
 
             return true;
         } //checkExtension
+
+
+        //--------- 첨부파일 목록 생성
+        function showUploadedFile(uploadResultArr){
+            console.log("uploadResultArr : {}", uploadResultArr);
+
+            var str = "";
+
+            $(uploadResultArr).each(function(i, obj){
+                if(!obj.image){
+
+                    str += "<li><img src='/resources/img/attach.png'>"+ obj.fileName +"</li>"
+                        + obj.fileName + "</li>";
+                } else {
+                    var fileCallPath =
+                        encodeURIComponent(obj.uploadPath + "/s_" + obj.uuid + "_" + obj.fileName);
+
+                    str += "<li><img src='/display?fileName=" + fileCallPath + "'><li>";
+                } //if-else
+
+            }); //traverse
+
+            uploadResult.append(str);
+
+        } //showuploadedFile
 
 
         $("#uploadBtn").on("click", function(e){
@@ -94,7 +157,13 @@
                 dataType: 'json',
                 success: function(result){
 
-                    console.log(result);
+                    console.log("result : {}" , result);
+
+                    // 첨부파일 목록 생성
+                    showUploadedFile(result);
+
+                    // 첨부파일 부분 초기화
+                    $(".uploadDiv").html(cloneObj.html());
                 } //success
             }); //ajax
         }); //on click for uploadBtn
