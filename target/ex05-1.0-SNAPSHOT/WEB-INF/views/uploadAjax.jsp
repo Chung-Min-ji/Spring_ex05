@@ -34,6 +34,30 @@
 <script>
     $(function(){
 
+        // 파일 확장자
+        var regex = new RegExp("(.*?)\.(exe|sh|zip|alz)$");
+
+        // 파일 최대 사이즈
+        var maxSize = 5242880; //5MB
+
+
+        //-------- 파일 확장자와 크기 검사
+        function checkExtension(fileName, fileSize){
+
+            if(fileSize >= maxSize){
+                alert("파일 사이즈 초과");
+                return false;
+            } //if
+
+            if(regex.test(fileName)){
+                alert("해당 종류의 파일은 업로드 할 수 없습니다.");
+                return false;
+            } //if
+
+            return true;
+        } //checkExtension
+
+
         $("#uploadBtn").on("click", function(e){
             var formData = new FormData();
             var inputFile = $("input[name='uploadFile']");
@@ -44,6 +68,12 @@
             // add File Data to formData
             // 첨부파일 데이터를 formData 에 추가해서, formData 자체를 전송.
             for(var i = 0; i< files.length; i++){
+
+                if(!checkExtension(files[i].name, files[i].size)){
+                    return false;
+                } //if
+
+                console.log("checkExtension passed...");
                 formData.append("uploadFile", files[i]);
             } //for
 
@@ -60,9 +90,11 @@
                 // 이를 multipart/form-data 로 전송하기 위해 false 지정.
                 contentType: false,
                 data: formData,
-                type: 'post',
+                method: 'post',
+                dataType: 'json',
                 success: function(result){
-                     alert("Uploaded");
+
+                    console.log(result);
                 } //success
             }); //ajax
         }); //on click for uploadBtn

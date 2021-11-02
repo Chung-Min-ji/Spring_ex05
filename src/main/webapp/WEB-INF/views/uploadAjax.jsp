@@ -91,8 +91,10 @@
                 contentType: false,
                 data: formData,
                 method: 'post',
+                dataType: 'json',
                 success: function(result){
-                     alert("Uploaded");
+
+                    console.log(result);
                 } //success
             }); //ajax
         }); //on click for uploadBtn
