@@ -8,10 +8,27 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.UUID;
 
 @Controller
 @Log4j2
 public class UploadController {
+
+    // 년/월/일 폴더의 생성
+    private String getFolder(){
+        log.debug("getFolder() invoked.");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        Date date = new Date();
+
+        String str = sdf.format(date);
+
+        return str.replace("-", File.separator);
+    } //getFolder
+
 
     @GetMapping("/uploadForm")
     public void uploadForm(){
@@ -55,6 +72,14 @@ public class UploadController {
 
         String uploadFolder = "/Users/jeongminji/Etc/upload";
 
+        //----------- make folder
+        File uploadPath = new File(uploadFolder, getFolder());
+        log.info("upload path : " + uploadPath);
+
+        if(uploadPath.exists() == false){
+            uploadPath.mkdirs();
+        } //if : 해당 업로드 경로가 존재하지 않으면, 새로운 디렉토리(yyyy/MM/dd) 생성.
+
         for(MultipartFile multipartFile : uploadFile){
             log.info("------------------");
             log.info("Upload File Name : " + multipartFile.getOriginalFilename());
@@ -68,7 +93,11 @@ public class UploadController {
 
             log.info("only filename : " + uploadFileName);
 
-            File saveFile = new File(uploadFolder, uploadFileName);
+            UUID uuid = UUID.randomUUID();
+
+            uploadFileName = uuid.toString() + "_" + uploadFileName;
+            
+            File saveFile = new File(uploadPath, uploadFileName);
 
             try {
                 multipartFile.transferTo(saveFile);
@@ -79,5 +108,7 @@ public class UploadController {
         } //enhanced for
 
     } //uploadAjaxPost
+
+
 
 } //end class
