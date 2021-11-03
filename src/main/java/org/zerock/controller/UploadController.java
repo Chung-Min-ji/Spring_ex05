@@ -2,6 +2,8 @@ package org.zerock.controller;
 
 import lombok.extern.log4j.Log4j2;
 import net.coobird.thumbnailator.Thumbnailator;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,16 +17,21 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.zerock.domain.AttachFileDTO;
 
-import javax.xml.ws.Response;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
+import static sun.net.www.protocol.http.HttpURLConnection.userAgent;
 
 @Controller
 @Log4j2
@@ -193,5 +200,87 @@ public class UploadController {
 
         return result;
     } //getFile
+
+
+    @GetMapping(value="/download", produces=MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @ResponseBody
+    public ResponseEntity<Resource> downloadFile(String fileName){
+        log.debug("downloadFile({}) invoked.", fileName);
+
+        Resource resource = new FileSystemResource("/Users/jeongminji/Etc/upload/" + fileName);
+
+        if(resource.exists() == false){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } //if : 파일이 첨부되지 않았으면
+
+        String resourceName = resource.getFilename();
+
+        // remove UUID
+        String resourceOriginalName = resourceName.substring(resourceName.indexOf("_") + 1);
+
+        HttpHeaders headers = new HttpHeaders();
+
+        try{
+            // 브라우저 별 다운로드 처리
+            String downloadName = null;
+
+            if(userAgent.contains("Trident")){  //Trident = IE브라우저 엔진 이름. IE11 처리.
+                log.info("IE browser");
+
+                downloadName = URLEncoder.encode(resourceOriginalName, "UTF-8").replaceAll("\\+", " ");
+
+            } else if(userAgent.contains("Edge")){
+                log.info("Edge browser");
+
+                downloadName = URLEncoder.encode(resourceOriginalName, "UTF-8");
+
+                log.info("Edge name : " + downloadName);
+            } else {
+                log.info("Chrome browser");
+
+                downloadName =
+                        new String(resourceOriginalName.getBytes("UTF-8"), "ISO-8859-1" );
+            } //if-else
+
+            log.info("download name : " + downloadName);
+
+            headers.add("Content-Disposition", "attachment; filename=" + downloadName);
+        }catch(UnsupportedEncodingException e){
+            e.printStackTrace();
+        } //try-catch
+
+        return new ResponseEntity<Resource>(resource, headers, HttpStatus.OK);
+    } //downloadFile
+
+
+    @PostMapping("/deleteFile")
+    @ResponseBody
+    public ResponseEntity<String> deleteFile(String fileName, String type){
+        log.debug("deleteFile({}, {}) invoked.", fileName, type);
+
+        File file;
+
+        try{
+            file = new File("/Users/jeongminji/Etc/upload/" + URLDecoder.decode(fileName, "utf8"));
+
+            file.delete();
+
+            if(type.equals("image")){
+                String largeFileName = file.getAbsolutePath().replace("s_", "");
+
+                log.info("largeFileName: " + largeFileName);
+
+                file = new File(largeFileName);
+
+                file.delete();
+            } //if
+        } catch(UnsupportedEncodingException e){
+            e.printStackTrace();
+
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } //try-catch
+
+        return new ResponseEntity<String>("deleted", HttpStatus.OK);
+    } //deleteFile
 
 } //end class
