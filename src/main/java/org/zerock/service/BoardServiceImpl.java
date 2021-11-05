@@ -5,6 +5,8 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.zerock.domain.BoardAttachVO;
 import org.zerock.domain.BoardVO;
 import org.zerock.domain.Criteria;
 import org.zerock.mapper.BoardAttachMapper;
@@ -28,6 +30,7 @@ public class BoardServiceImpl implements BoardService{
 
 
     // 게시물 등록
+    @Transactional
     @Override
     public void register(BoardVO board){
         log.debug("register({}) invoked.", board);
@@ -44,7 +47,7 @@ public class BoardServiceImpl implements BoardService{
 
             attach.setBno(board.getBno());
             attachMapper.insert(attach);
-                }); //forEach
+        }); //forEach
 
     } //register
 
@@ -100,12 +103,22 @@ public class BoardServiceImpl implements BoardService{
     } //getList
 
 
+    // 전체 게시물 수 조회
     @Override
     public int getTotal(Criteria cri){
         log.debug("getTotal(cri) invoked.");
 
         return mapper.getTotalCount(cri);
     } //getTotal
+
+
+    // bno로 첨부파일 목록 가져오기
+    @Override
+    public List<BoardAttachVO> getAttachList(Long bno){
+        log.debug("getAttachList({}) invoked.");
+
+        return attachMapper.findByBno(bno);
+    } //getAttachList
 
 } //BoardServiceImpl
 
