@@ -32,6 +32,8 @@ public class Criteria {
         return type == null ? new String[]{} : type.split("");
     } //getTypeArr
 
+
+    // 검색조건 유지하면서 이동
     public String getListLink(){
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("")
                 // queryParam() 통해 필요한 파라미터 추가.

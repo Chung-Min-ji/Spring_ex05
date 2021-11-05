@@ -74,12 +74,13 @@ public class BoardServiceImpl implements BoardService{
     } //modify
 
 
-    // 게시물 삭제
+    // 게시물 삭제 (첨부파일 함께 삭제되도록 트랜잭션 처리)
+    @Transactional
     @Override
     public boolean remove(Long bno) {
-        log.debug("remove(bno) invoked.");
+        log.debug("remove({}) invoked.", bno);
 
-        log.info("bno : " + bno);
+        attachMapper.deleteAll(bno);
 
         return mapper.delete(bno) == 1;
     } //remove
@@ -115,7 +116,7 @@ public class BoardServiceImpl implements BoardService{
     // bno로 첨부파일 목록 가져오기
     @Override
     public List<BoardAttachVO> getAttachList(Long bno){
-        log.debug("getAttachList({}) invoked.");
+        log.debug("getAttachList({}) invoked.", bno);
 
         return attachMapper.findByBno(bno);
     } //getAttachList

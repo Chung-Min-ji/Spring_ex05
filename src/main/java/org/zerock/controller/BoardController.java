@@ -16,6 +16,9 @@ import org.zerock.domain.Criteria;
 import org.zerock.domain.PageDTO;
 import org.zerock.service.BoardService;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RequestMapping("/board/")
@@ -119,6 +122,41 @@ public class BoardController {
     } //modify
 
 
+    // 파일 삭제
+
+    private void deleteFiles(List<BoardAttachVO> attachList){
+        log.debug("deleteFiles({}) invoked.", attachList);
+
+        if(attachList == null || attachList.size() == 0){
+            return;
+        } //if
+
+        log.info("\t ++ delete attach files...");
+        log.info("attachList :  {} ", attachList);
+
+        attachList.forEach(attach->{
+            try{
+                Path file = Paths.get(UploadController.UPLOAD_PATH + attach.getUploadPath() + "/" +
+                        attach.getUuid() + "_" + attach.getFileName());
+
+                Files.deleteIfExists(file);
+
+                if(Files.probeContentType(file).startsWith("image")){
+
+                    Path thumbNail = Paths.get(UploadController.UPLOAD_PATH + attach.getUploadPath() +
+                            "/s_" + attach.getUuid() + "_" + attach.getFileName());
+
+                    Files.delete(thumbNail);
+                } //if
+            } catch(Exception e){
+                log.error("delete file error : " + e.getMessage());
+            } //try-catch
+
+        }); //forEach
+    } //deleteFiles
+
+
+
     // 게시물 삭제
     @PostMapping("/remove")
     public String remove(@RequestParam("bno") Long bno,
@@ -126,7 +164,13 @@ public class BoardController {
                          RedirectAttributes rttrs){
         log.debug("remove({}, rttrs) invoked.", bno);
 
+        List<BoardAttachVO> attachList = service.getAttachList(bno);
+
         if (service.remove(bno)){
+
+            //delete Attach Files
+            deleteFiles(attachList);
+
             rttrs.addFlashAttribute("result", "success");
         } //if : 성공적으로 remove가 이루어졌으면..
 

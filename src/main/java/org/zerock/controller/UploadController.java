@@ -37,6 +37,8 @@ import static sun.net.www.protocol.http.HttpURLConnection.userAgent;
 @Log4j2
 public class UploadController {
 
+    public static final String UPLOAD_PATH = "/Users/jeongminji/Etc/upload/";
+
     //-- 년/월/일 폴더의 생성
     private String getFolder(){
         log.debug("getFolder() invoked.");
@@ -78,7 +80,7 @@ public class UploadController {
     public void uploadFormPost(MultipartFile[]uploadFile, Model model){
         log.debug("uploadFormPost({}, {}) invoked.", uploadFile, model);
 
-        String uploadFolder = "/Users/jeongminji/Etc/upload";
+        String uploadFolder = UploadController.UPLOAD_PATH;
 
         for(MultipartFile multipartFile : uploadFile){
             log.info("------------------");
@@ -111,7 +113,7 @@ public class UploadController {
         log.debug("uploadAjaxPost({}) invoked", uploadFile);
 
         List<AttachFileDTO> list = new ArrayList<>();
-        String uploadFolder = "/Users/jeongminji/Etc/upload";
+        String uploadFolder = UploadController.UPLOAD_PATH;
 
         String uploadFolderPath = getFolder();
 
@@ -182,7 +184,7 @@ public class UploadController {
     public ResponseEntity<byte[]> getFile(String fileName){
         log.debug("getFile({}) invoked.", fileName);
 
-        File file = new File("/Users/jeongminji/Etc/upload/" + fileName);
+        File file = new File(UploadController.UPLOAD_PATH + fileName);
 
         log.info("file : " + file);
 
@@ -207,7 +209,7 @@ public class UploadController {
     public ResponseEntity<Resource> downloadFile(String fileName){
         log.debug("downloadFile({}) invoked.", fileName);
 
-        Resource resource = new FileSystemResource("/Users/jeongminji/Etc/upload/" + fileName);
+        Resource resource = new FileSystemResource(UploadController.UPLOAD_PATH + fileName);
 
         if(resource.exists() == false){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -261,7 +263,7 @@ public class UploadController {
         File file;
 
         try{
-            file = new File("/Users/jeongminji/Etc/upload/" + URLDecoder.decode(fileName, "utf8"));
+            file = new File(UploadController.UPLOAD_PATH + URLDecoder.decode(fileName, "utf8"));
 
             file.delete();
 
